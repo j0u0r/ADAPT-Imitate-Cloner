@@ -14,49 +14,50 @@ puts "VM cpus:"
 cpus = gets.chomp.to_i
 
 Vagrant.configure("2") do |config|
-    config.vm.define name do |cfg|
-    cfg.vm.box = "detectionlab/win2016"
-    cfg.vm.hostname = hostname
-    cfg.vm.boot_timeout = 600
-    cfg.winrm.transport = :plaintext
-    cfg.vm.communicator = "winrm"
-    cfg.winrm.basic_auth_only = true
-    cfg.winrm.timeout = 300
-    cfg.winrm.retry_limit = 20
-    cfg.vm.network :private_network, ip: ip, gateway: gateway, dns: dns
+  config.vm.define name do |cfg|
+  cfg.vm.box = "detectionlab/win2016"
+  cfg.vm.hostname = hostname
+  cfg.vm.boot_timeout = 600
+  cfg.winrm.transport = :plaintext
+  cfg.vm.communicator = "winrm"
+  cfg.winrm.basic_auth_only = true
+  cfg.winrm.timeout = 300
+  cfg.winrm.retry_limit = 20
+  cfg.vm.network :private_network, ip: ip, gateway: gateway, dns: dns
 
-    # scripts
-    cfg.vm.provision "shell", path: "scripts/fix-second-network.ps1", privileged: true, args: "-ip #{ip} -dns #{dns} -gateway #{gateway}" 
+  # scripts
+  cfg.vm.provision "shell", path: "scripts/fix-second-network.ps1", privileged: true, args: "-ip #{ip} -dns #{dns} -gateway #{gateway}" 
 
-    cfg.vm.provider "vmware_desktop" do |v, override|
-        v.vmx["displayname"] = name
-        v.memory = memory
-        v.cpus = cpus
-        v.gui = true
-    end
-    cfg.vm.provider "virtualbox" do |vb, override|
-        vb.gui = true
-        vb.name = name
-        vb.default_nic_type = "82545EM"
-        vb.customize ["modifyvm", :id, "--memory", memory]
-        vb.customize ["modifyvm", :id, "--cpus", cpus]
-        vb.customize ["modifyvm", :id, "--vram", "32"] #???
-        vb.customize ["modifyvm", :id, "--clipboard", "bidirectional"]
-        vb.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
-        vb.customize ["setextradata", "global", "GUI/SuppressMessages", "all" ]
-      end
-    
-      cfg.vm.provider "libvirt" do |lv, override|
-        lv.graphics_type = "spice"
-        lv.video_type = "qxl"
-        lv.input :type => "tablet", :bus => "usb"
-    
-        override.vm.box = "../Boxes/windows_2016_libvirt.box"
-        lv.video_vram = 32768 #??
-        lv.memory = memory
-        lv.cpus = cpus
-        # This is NOT the right semantic for Vagrant synced folder. It's a workaround:
-        # https://github.com/Cimpress-MCP/vagrant-winrm-syncedfolders/issues/11
-        override.vm.synced_folder '.', '/', type: 'winrm' 
-        end
+  cfg.vm.provider "vmware_desktop" do |v, override|
+    v.vmx["displayname"] = name
+    v.memory = memory
+    v.cpus = cpus
+    v.gui = true
+  end
+  
+  cfg.vm.provider "virtualbox" do |vb, override|
+    vb.gui = true
+    vb.name = name
+    vb.default_nic_type = "82545EM"
+    vb.customize ["modifyvm", :id, "--memory", memory]
+    vb.customize ["modifyvm", :id, "--cpus", cpus]
+    vb.customize ["modifyvm", :id, "--vram", "32"] #???
+    vb.customize ["modifyvm", :id, "--clipboard", "bidirectional"]
+    vb.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
+    vb.customize ["setextradata", "global", "GUI/SuppressMessages", "all" ]
+  end
+  
+  cfg.vm.provider "libvirt" do |lv, override|
+    lv.graphics_type = "spice"
+    lv.video_type = "qxl"
+    lv.input :type => "tablet", :bus => "usb"
+
+    override.vm.box = "../Boxes/windows_2016_libvirt.box"
+    lv.video_vram = 32768 #??
+    lv.memory = memory
+    lv.cpus = cpus
+    # This is NOT the right semantic for Vagrant synced folder. It's a workaround:
+    # https://github.com/Cimpress-MCP/vagrant-winrm-syncedfolders/issues/11
+    override.vm.synced_folder '.', '/', type: 'winrm' 
+  end
 end
